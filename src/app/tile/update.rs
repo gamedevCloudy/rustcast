@@ -13,6 +13,8 @@ use iced::window::Id;
 use log::info;
 use rayon::slice::ParallelSliceMut;
 
+use crate::app::ToApp;
+use crate::app::ToApps;
 use crate::app::WINDOW_WIDTH;
 use crate::app::apps::App;
 use crate::app::apps::AppCommand;
@@ -40,6 +42,21 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
             tile.visible = true;
             Task::none()
         }
+
+        Message::SwitchMode(mode) => {
+            if let Some(command) = tile.config.modes.get(mode.trim()) {
+                tile.current_mode = mode.clone();
+                info!("Switched mode");
+                Task::done(Message::RunFunction(Function::RunShellCommand(
+                    command.to_owned(),
+                )))
+            } else {
+                info!("Switching to default mode");
+                tile.current_mode = "default".to_string();
+                window::latest().map(|x| Message::HideWindow(x.unwrap()))
+            }
+        }
+
         Message::HideTrayIcon => {
             tile.tray_icon = None;
             tile.config.show_trayicon = false;
@@ -52,7 +69,7 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
         Message::SetSender(sender) => {
             tile.sender = Some(sender.clone());
             if tile.config.show_trayicon {
-                tile.tray_icon = Some(menu_icon(tile.hotkeys.toggle, sender));
+                tile.tray_icon = Some(menu_icon(tile.config.clone(), sender));
             }
             Task::none()
         }
@@ -216,6 +233,7 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
 
             let mut new_options = get_installed_apps(new_config.theme.show_icons);
             new_options.extend(new_config.shells.iter().map(|x| x.to_app()));
+            new_options.extend(new_config.modes.to_apps());
             new_options.extend(App::basic_apps());
             new_options.par_sort_by_key(|x| x.display_name.len());
 
@@ -275,7 +293,7 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
         }
 
         Message::RunFunction(command) => {
-            command.execute(&tile.config, &tile.query);
+            command.execute(&tile.config);
 
             let return_focus_task = match &command {
                 Function::OpenApp(_) | Function::OpenPrefPane | Function::GoogleSearch(_) => {

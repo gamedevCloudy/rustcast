@@ -1,5 +1,9 @@
 //! Main logic for the app
+use std::collections::HashMap;
+
+use crate::app::apps::{App, ICNS_ICON};
 use crate::commands::Function;
+use crate::utils::icns_data_to_handle;
 use crate::{app::tile::ExtSender, clipboard::ClipBoardContentType};
 
 pub mod apps;
@@ -59,6 +63,7 @@ pub enum Message {
     WindowFocusChanged(Id, bool),
     ClearSearchQuery,
     HideTrayIcon,
+    SwitchMode(String),
     ReloadConfig,
     SetSender(ExtSender),
     SwitchToPage(Page),
@@ -80,5 +85,39 @@ pub fn default_settings() -> Settings {
             height: DEFAULT_WINDOW_HEIGHT,
         },
         ..Default::default()
+    }
+}
+
+pub trait ToApp {
+    fn to_app(&self) -> App;
+}
+
+pub trait ToApps {
+    fn to_apps(&self) -> Vec<App>;
+}
+
+impl ToApps for HashMap<String, String> {
+    fn to_apps(&self) -> Vec<App> {
+        let icons = icns_data_to_handle(ICNS_ICON.to_vec());
+
+        self.keys()
+            .map(|key| {
+                let display_name = format!(
+                    "{}{} Mode",
+                    key.split_at(1).0.to_uppercase(),
+                    key.split_at(1).1
+                );
+                App {
+                    ranking: 0,
+                    open_command: apps::AppCommand::Message(Message::SwitchMode(
+                        key.trim().to_owned(),
+                    )),
+                    search_name: key.to_owned(),
+                    desc: "Switch Modes".to_string(),
+                    icons: icons.clone(),
+                    display_name,
+                }
+            })
+            .collect()
     }
 }
