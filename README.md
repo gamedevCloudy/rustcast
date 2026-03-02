@@ -32,8 +32,9 @@
 > calculators, quick-notes, etc.
 
 **Community:** https://discord.gg/bDfNYPbnC5
+**Plugins**: [RustCast Library for shell scripts](https://github.com/unsecretised/rustcast-library)
 
-![RustCast Demo PreRelease V1](./docs/rustcast_demo_v0_5_6.png)
+![RustCast Demo](./docs/rustcast_demo_v0_5_6.png)
 
 ## Installation:
 
