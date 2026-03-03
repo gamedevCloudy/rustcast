@@ -255,6 +255,7 @@ h1 em {
   gap: 2.5rem;
   justify-content: center;
   animation: fadeUp 0.6s 0.4s ease both;
+  margin-bottom: 20px;
 }
 
 .stat {
