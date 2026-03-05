@@ -186,8 +186,6 @@ impl Tile {
                         keyboard::Key::Character(chr) => {
                             if modifiers.command() && chr.to_string() == "r" {
                                 return Some(Message::ReloadConfig);
-                            } else if modifiers.command() && chr.to_string() == "," {
-                                open_settings();
                             } else if chr.to_string() == "p" && modifiers.control() {
                                 return Some(Message::ChangeFocus(ArrowKey::Up, 1));
                             } else if chr.to_string() == "n" && modifiers.control() {
