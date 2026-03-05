@@ -298,9 +298,21 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
 
         Message::SwitchToPage(page) => {
             tile.page = page;
+            let task = if tile.page == Page::ClipboardHistory {
+                window::latest().map(|x| {
+                    let id = x.unwrap();
+                    Message::ResizeWindow(
+                        id,
+                        ((7 * 55) + 35 + DEFAULT_WINDOW_HEIGHT as usize) as f32,
+                    )
+                })
+            } else {
+                Task::none()
+            };
             Task::batch([
                 Task::done(Message::ClearSearchQuery),
                 Task::done(Message::ClearSearchResults),
+                task,
             ])
         }
 
