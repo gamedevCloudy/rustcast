@@ -178,7 +178,7 @@ impl Tile {
                 if let keyboard::Event::KeyPressed { key, modifiers, .. } = event {
                     match key {
                         keyboard::Key::Named(Named::Escape) => {
-                            return Some(Message::KeyPressed(65598));
+                            return Some(Message::ReturnFocus);
                         }
                         keyboard::Key::Named(Named::ArrowUp) => {
                             return Some(Message::ChangeFocus(ArrowKey::Up, 1));
