@@ -26,7 +26,6 @@ use crate::app::{Message, Page, tile::Tile};
 use crate::calculator::Expr;
 use crate::commands::Function;
 use crate::config::Config;
-use crate::tile::Hotkeys;
 use crate::unit_conversion;
 use crate::utils::is_valid_url;
 use crate::{app::ArrowKey, platform::focus_this_app};
@@ -266,19 +265,6 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
             new_options.extend(new_config.modes.to_apps());
             new_options.extend(App::basic_apps());
             new_options.par_sort_by_key(|x| x.display_name.len());
-
-            tile.hotkeys = Hotkeys {
-                toggle: new_config
-                    .toggle_hotkey
-                    .parse()
-                    .unwrap_or(tile.hotkeys.toggle),
-                clipboard_hotkey: new_config
-                    .clipboard_hotkey
-                    .parse()
-                    .unwrap_or(tile.hotkeys.clipboard_hotkey),
-            };
-
-            tile.hotkeys.register();
 
             tile.theme = new_config.theme.to_owned().into();
             tile.config = new_config;
