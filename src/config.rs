@@ -45,9 +45,9 @@ impl Default for Config {
             haptic_feedback: false,
             show_trayicon: true,
             search_dirs: vec![
-                "Documents".to_string(),
-                "Desktop".to_string(),
-                "Downloads".to_string(),
+                "~/Documents".to_string(),
+                "~/Desktop".to_string(),
+                "~/Downloads".to_string(),
             ],
             log_path: "/tmp/rustcast.log".to_string(),
             modes: HashMap::new(),

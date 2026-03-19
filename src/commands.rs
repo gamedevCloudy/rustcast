@@ -144,7 +144,7 @@ pub fn search_for_file(name: &str, dirs: Vec<&str>) -> Vec<App> {
 
     dirs.iter().fold(Vec::with_capacity(400), move |vec, dir| {
         let mut apps = vec.clone();
-        apps.extend(search(format!("{}/{}", home, dir), name));
+        apps.extend(search(dir.replace("~", &home), name));
         apps
     })
 }
