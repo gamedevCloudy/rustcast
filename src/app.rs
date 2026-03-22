@@ -37,6 +37,7 @@ pub enum Page {
     FileSearch,
     ClipboardHistory,
     EmojiSearch,
+    Settings,
 }
 
 impl std::fmt::Display for Page {
@@ -46,6 +47,7 @@ impl std::fmt::Display for Page {
             Page::FileSearch => "File search",
             Page::EmojiSearch => "Emoji search",
             Page::ClipboardHistory => "Clipboard history",
+            Page::Settings => "Settings",
         })
     }
 }
@@ -70,15 +72,18 @@ pub enum Move {
 /// The message type that iced uses for actions that can do something
 #[derive(Debug, Clone)]
 pub enum Message {
+    WriteConfig,
     UpdateAvailable,
     ResizeWindow(Id, f32),
     OpenWindow,
+    OpenToSettings,
     SearchQueryChanged(String, Id),
     KeyPressed(u32),
     FocusTextInput(Move),
     HideWindow(Id),
     RunFunction(Function),
     OpenFocused,
+    SetConfig(SetConfigFields),
     ReturnFocus,
     EscKeyPressed(Id),
     ClearSearchResults,
@@ -95,6 +100,37 @@ pub enum Message {
     FileSearchClear,
     SetFileSearchSender(tokio::sync::watch::Sender<(String, Vec<String>)>),
     DebouncedSearch(Id),
+}
+
+#[derive(Debug, Clone)]
+pub enum SetConfigFields {
+    ToDefault,
+    ToggleHotkey(String),
+    ClipboardHotkey(String),
+    PlaceHolder(String),
+    SearchUrl(String),
+    HapticFeedback(bool),
+    ShowMenubarIcon(bool),
+    //    Modes(HashMap<String, String>),
+    //    Aliases(HashMap<String, String>),
+    //    SearchDirs(Vec<String>),
+    DebounceDelay(u64),
+    SetThemeFields(SetConfigThemeFields),
+    SetBufferFields(SetConfigBufferFields),
+}
+
+#[derive(Debug, Clone)]
+pub enum SetConfigThemeFields {
+    TextColor(f32, f32, f32),
+    BackgroundColor(f32, f32, f32),
+    ShowIcons(bool),
+    Font(String),
+}
+
+#[derive(Debug, Clone)]
+pub enum SetConfigBufferFields {
+    ClearOnHide(bool),
+    ClearOnEnter(bool),
 }
 
 /// The window settings for rustcast
@@ -173,10 +209,10 @@ impl ToApps for HashMap<String, String> {
 impl DebouncePolicy for Page {
     fn debounce_delay(&self, config: &Config) -> Option<Duration> {
         match self {
-            Page::Main => None,
-            Page::FileSearch => Some(Duration::from_millis(config.debounce_delay)),
-            Page::ClipboardHistory => None,
-            Page::EmojiSearch => Some(Duration::from_millis(config.debounce_delay)),
+            Page::Main | Page::ClipboardHistory | Page::Settings => None,
+            Page::FileSearch | Page::EmojiSearch => {
+                Some(Duration::from_millis(config.debounce_delay))
+            }
         }
     }
 }

@@ -23,7 +23,6 @@ pub enum Function {
     CopyToClipboard(ClipBoardContentType),
     GoogleSearch(String),
     Calculate(Expr),
-    OpenPrefPane,
     Quit,
 }
 
@@ -97,16 +96,6 @@ impl Function {
                 }
             },
 
-            Function::OpenPrefPane => {
-                thread::spawn(move || {
-                    NSWorkspace::new().openURL(&NSURL::fileURLWithPath(
-                        &objc2_foundation::NSString::from_str(
-                            &(std::env::var("HOME").unwrap_or("".to_string())
-                                + "/.config/rustcast/config.toml"),
-                        ),
-                    ));
-                });
-            }
             Function::Quit => std::process::exit(0),
         }
     }
