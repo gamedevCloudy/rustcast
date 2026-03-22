@@ -6,7 +6,6 @@ use crate::app::{ArrowKey, Message, Move, Page};
 use crate::clipboard::ClipBoardContentType;
 use crate::config::Config;
 use crate::debounce::Debouncer;
-use crate::utils::open_settings;
 use crate::{app::apps::App, platform::default_app_paths};
 
 use arboard::Clipboard;
@@ -169,7 +168,7 @@ impl Tile {
                 ..
             }) => {
                 if cha.to_string() == "," {
-                    open_settings();
+                    return Some(Message::SwitchToPage(Page::Settings));
                 }
                 None
             }

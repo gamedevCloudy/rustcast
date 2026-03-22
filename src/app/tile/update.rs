@@ -330,6 +330,14 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
             }
         }
 
+        Message::OpenToSettings => {
+            tile.page = Page::Settings;
+            Task::batch([
+                Task::done(Message::OpenWindow),
+                open_window(((7 * 55) + 35 + DEFAULT_WINDOW_HEIGHT as usize) as f32),
+            ])
+        }
+
         Message::SwitchToPage(page) => {
             tile.page = page;
             let task = match tile.page {

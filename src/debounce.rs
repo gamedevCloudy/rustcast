@@ -27,10 +27,11 @@ impl Debouncer {
 
     pub fn is_ready(&mut self) -> bool {
         if let Some(instant) = self.triggered
-            && instant.elapsed() >= self.delay {
-                self.triggered = None;
-                return true;
-            }
+            && instant.elapsed() >= self.delay
+        {
+            self.triggered = None;
+            return true;
+        }
         false
     }
 }

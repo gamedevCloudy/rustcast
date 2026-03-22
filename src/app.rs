@@ -70,6 +70,7 @@ pub enum Message {
     UpdateAvailable,
     ResizeWindow(Id, f32),
     OpenWindow,
+    OpenToSettings,
     SearchQueryChanged(String, Id),
     KeyPressed(u32),
     FocusTextInput(Move),
