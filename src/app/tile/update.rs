@@ -90,10 +90,7 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
             match tile.page {
                 Page::Main => {}
                 Page::Settings => {
-                    return Task::batch([
-                        Task::done(Message::WriteConfig),
-                        Task::done(Message::SwitchToPage(Page::Main)),
-                    ]);
+                    return Task::done(Message::WriteConfig(true));
                 }
                 _ => {
                     return Task::done(Message::SwitchToPage(Page::Main));
@@ -276,15 +273,8 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
                     .ok();
             }
 
-            let mut new_options = get_installed_apps(new_config.theme.show_icons);
-            new_options.extend(new_config.shells.iter().map(|x| x.to_app()));
-            new_options.extend(new_config.modes.to_apps());
-            new_options.extend(App::basic_apps());
-            new_options.par_sort_by_key(|x| x.display_name.len());
-
             tile.theme = new_config.theme.to_owned().into();
             tile.config = new_config;
-            tile.options = AppIndex::from_apps(new_options);
             Task::none()
         }
 
@@ -413,6 +403,17 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
             ])
         }
 
+        Message::UpdateApps => {
+            let mut new_options = get_installed_apps(tile.config.theme.show_icons);
+            new_options.extend(tile.config.shells.iter().map(|x| x.to_app()));
+            new_options.extend(tile.config.modes.to_apps());
+            new_options.extend(App::basic_apps());
+            new_options.par_sort_by_key(|x| x.display_name.len());
+            tile.options = AppIndex::from_apps(new_options);
+
+            Task::none()
+        }
+
         Message::ClearSearchResults => {
             tile.results = Vec::new();
             Task::none()
@@ -533,6 +534,9 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
                 SetConfigFields::SetThemeFields(SetConfigThemeFields::ShowIcons(icns)) => {
                     final_config.theme.show_icons = icns
                 }
+                SetConfigFields::SetThemeFields(SetConfigThemeFields::ShowScrollBar(show)) => {
+                    final_config.theme.show_scroll_bar = show
+                }
                 SetConfigFields::SetThemeFields(SetConfigThemeFields::BackgroundColor(r, g, b)) => {
                     final_config.theme.background_color = (r, g, b)
                 }
@@ -552,11 +556,10 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
             };
 
             tile.config = final_config;
-
             Task::none()
         }
 
-        Message::WriteConfig => {
+        Message::WriteConfig(page_switch) => {
             let config_file_path =
                 std::env::var("HOME").unwrap_or("".to_string()) + "/.config/rustcast/config.toml";
 
@@ -576,7 +579,14 @@ pub fn handle_update(tile: &mut Tile, message: Message) -> Task<Message> {
                 })
                 .ok();
 
-            Task::none()
+            Task::batch([
+                Task::done(Message::ReloadConfig),
+                if page_switch {
+                    Task::done(Message::SwitchToPage(Page::Main))
+                } else {
+                    Task::none()
+                },
+            ])
         }
 
         Message::DebouncedSearch(id) => {

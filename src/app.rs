@@ -72,7 +72,7 @@ pub enum Move {
 /// The message type that iced uses for actions that can do something
 #[derive(Debug, Clone)]
 pub enum Message {
-    WriteConfig,
+    WriteConfig(bool),
     UpdateAvailable,
     ResizeWindow(Id, f32),
     OpenWindow,
@@ -92,6 +92,7 @@ pub enum Message {
     HideTrayIcon,
     SwitchMode(String),
     ReloadConfig,
+    UpdateApps,
     SetSender(ExtSender),
     SwitchToPage(Page),
     ClipboardHistory(ClipBoardContentType),
@@ -121,6 +122,7 @@ pub enum SetConfigFields {
 
 #[derive(Debug, Clone)]
 pub enum SetConfigThemeFields {
+    ShowScrollBar(bool),
     TextColor(f32, f32, f32),
     BackgroundColor(f32, f32, f32),
     ShowIcons(bool),
