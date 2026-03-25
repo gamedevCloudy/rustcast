@@ -6,15 +6,15 @@ use global_hotkey::hotkey::{Code, HotKey, Modifiers};
 use image::{DynamicImage, ImageReader};
 use log::info;
 use tray_icon::{
-    Icon, TrayIcon, TrayIconBuilder,
     menu::{
-        AboutMetadataBuilder, Icon as Ico, IsMenuItem, Menu, MenuEvent, MenuItem,
-        PredefinedMenuItem, Submenu, accelerator::Accelerator,
+        accelerator::Accelerator, AboutMetadataBuilder, Icon as Ico, IsMenuItem, Menu, MenuEvent,
+        MenuItem, PredefinedMenuItem, Submenu,
     },
+    Icon, TrayIcon, TrayIconBuilder,
 };
 
 use crate::{
-    app::{Message, tile::ExtSender},
+    app::{tile::ExtSender, Message},
     config::Config,
     utils::open_url,
 };
@@ -39,14 +39,66 @@ pub fn menu_icon(config: Config, sender: ExtSender) -> TrayIcon {
 }
 
 pub fn menu_builder(config: Config, sender: ExtSender, update_item: bool) -> Menu {
-    let hotkey = config.toggle_hotkey.parse::<HotKey>().unwrap();
+    let hotkey = config.toggle_hotkey.parse::<HotKey>().ok();
 
     let mut modes = config.modes;
     if !modes.contains_key("default") {
         modes.insert("Default".to_string(), "default".to_string());
     }
 
-    init_event_handler(sender, hotkey.id());
+    if let Some(hk) = &hotkey {
+        init_event_handler(sender, hk.id());
+    } else {
+        let sender = sender.0.clone();
+        MenuEvent::set_event_handler(Some(move |x: MenuEvent| {
+            let mut sender = sender.clone();
+            info!("Menubar event called: {}", x.id.0);
+            match x.id().0.as_str() {
+                "refresh_rustcast" => {
+                    let _ = sender.try_send(Message::ReloadConfig);
+                }
+                "hide_tray_icon" => {
+                    let _ = sender.try_send(Message::HideTrayIcon);
+                }
+                "open_issue_page" => {
+                    open_url("https://github.com/unsecretised/rustcast/issues/new");
+                }
+                "show_rustcast" => {
+                    let _ = sender.try_send(Message::ReloadConfig);
+                }
+                "update" => {
+                    open_url("https://github.com/unsecretised/rustcast/releases/latest");
+                }
+                "open_discord" => {
+                    open_url(DISCORD_LINK);
+                }
+                "open_help_page" => {
+                    open_url(
+                        "https://github.com/unsecretised/rustcast/discussions/new?category=q-a",
+                    );
+                }
+                "open_preferences" => {
+                    let _ = sender.try_send(Message::OpenToSettings);
+                }
+                "open_github_page" => {
+                    open_url("https://github.com/unsecretised/rustcast");
+                }
+                id => {
+                    if id.starts_with("mode_switch_") {
+                        let mode = id.strip_prefix("mode_switch_").unwrap_or("").to_string();
+                        let _ = sender.try_send(Message::SwitchMode(mode));
+                    }
+                }
+            }
+        }));
+    }
+
+    let open_toggle = hotkey.map(|hk| open_item(hk));
+    let open_fallback = open_item_fallback();
+    let open_menu_item: &dyn IsMenuItem = match &open_toggle {
+        Some(item) => item,
+        None => &open_fallback,
+    };
 
     Menu::with_items(&[
         &MenuItem::with_id(
@@ -64,7 +116,7 @@ pub fn menu_builder(config: Config, sender: ExtSender, update_item: bool) -> Men
         &open_github_item(),
         &PredefinedMenuItem::separator(),
         &refresh_item(),
-        &open_item(hotkey),
+        open_menu_item,
         &mode_item(modes),
         &PredefinedMenuItem::separator(),
         &open_issue_item(),
@@ -186,6 +238,10 @@ fn open_item(hotkey: HotKey) -> MenuItem {
         true,
         Some(Accelerator::new(Some(hotkey.mods), hotkey.key)),
     )
+}
+
+fn open_item_fallback() -> MenuItem {
+    MenuItem::with_id("show_rustcast", "Toggle View", true, None)
 }
 
 fn open_github_item() -> MenuItem {
